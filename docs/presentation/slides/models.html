@@ -1,0 +1,26 @@
+<section id="models" style="background:#f6f6f2;color:#1c2140;font-family:'Noto Sans KR', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<p style="font-size:26px;color:#5b5bd6;font-weight:700">우리가 만든 것</p>
+<h2 style="font-size:60px;font-weight:700;line-height:1.2">문제가 다르니 모델도 셋으로 나눴습니다</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="background:#ffffff;border:1px solid #e2e2dc;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#5b5bd6">평소 가격</h3>
+<p style="font-size:28px;line-height:1.5">시간마다 하한·중앙·상한을 예측</p>
+<p style="font-size:28px;line-height:1.5;color:#4a5068">Chronos-2 + 수요예측 75~85%<br>LightGBM 15~25%<br>Chronos-2 단변량 0~5%</p>
+<p style="font-size:26px;line-height:1.5;color:#4a5068">+ 등각 보정, 예측 방향 쪽 넓히기, 평일 10·11·15·16시 상한 확대</p>
+</div>
+<div style="background:#ffffff;border:1px solid #e2e2dc;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#2a6fc9">급락 경보</h3>
+<p style="font-size:28px;line-height:1.5">날마다 「내일 급락할 확률」</p>
+<p style="font-size:28px;line-height:1.5;color:#4a5068">XGBoost · CatBoost · RandomForest 각 1/3</p>
+<p style="font-size:26px;line-height:1.5;color:#4a5068">과거 SMP, 수요예측, 달력, 연휴 며칠째·남은 날 · 문턱 3.894%</p>
+</div>
+<div style="background:#ffffff;border:1px solid #e2e2dc;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#d9622b">급등 대응</h3>
+<p style="font-size:28px;line-height:1.5">경보 + 넓힌 범위, 두 겹</p>
+<p style="font-size:28px;line-height:1.5;color:#4a5068">LightGBM · XGBoost · CatBoost 각 1/3</p>
+<p style="font-size:26px;line-height:1.5;color:#4a5068">+ 전날 전력수급실적(공급 여유) · 문턱 6.79% · 전날 급등이면 경계</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6b7080">학습 2021~2024 · 설정 2025 · 시험 2026.1~9 · 입력은 전날(D-1)에 알 수 있는 값만</p>
+<aside>문제마다 성격이 달라서 모델을 셋으로 나눴습니다. 평소 가격은 시간마다 범위로 예측하고, Chronos-2 비중이 가장 큽니다. 피드백에서 기업도 Chronos-2 비중을 높였을 때 오차가 줄었다고 하셨는데 같은 방향입니다. 급락은 하루 단위 확률을 내는 경보 모델, 급등은 경보만으로 부족해서 예측 범위를 넓히는 방법을 함께 씁니다.</aside>
+</section>

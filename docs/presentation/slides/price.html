@@ -1,0 +1,26 @@
+<section id="price" style="background:#f6f6f2;color:#1c2140;font-family:'Noto Sans KR', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<p style="font-size:26px;color:#5b5bd6;font-weight:700">평소 가격 · 기업 목표 점검</p>
+<h2 style="font-size:60px;font-weight:700;line-height:1.2">목표에는 조금 못 미쳤고, 오차는 급락 시간에 몰려 있습니다</h2>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px">
+<table style="font-size:30px;width:100%">
+<tr><th style="width:28%;text-align:left">지표</th><th style="width:30%;text-align:right">목표</th><th style="width:22%;text-align:right">2026</th><th style="width:20%;text-align:right">판정</th></tr>
+<tr><td>rMAE</td><td style="text-align:right">0.65 이하</td><td style="text-align:right">0.700</td><td style="text-align:right">미달</td></tr>
+<tr><td>MAE</td><td style="text-align:right">7.0원 이하</td><td style="text-align:right">7.85원</td><td style="text-align:right">미달</td></tr>
+<tr><td>MAPE</td><td style="text-align:right">5.0% 미만</td><td style="text-align:right">8.03%</td><td style="text-align:right">미달</td></tr>
+<tr><td>편의</td><td style="text-align:right">±1.5% 이내</td><td style="text-align:right">1.81%</td><td style="text-align:right">미달</td></tr>
+</table>
+<p style="font-size:26px;color:#4a5068;line-height:1.5">급락 경보일 낮 시간을 25% 낮추면 편의 1.40%로 목표 안 (MAE는 7.89원으로 조금 나빠짐)</p>
+</div>
+<div style="width:640px;background:#ffffff;border:1px solid #e2e2dc;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:20px">
+<h3 style="font-size:32px;font-weight:700">오차는 어디서 나오나</h3>
+<p style="font-size:26px;color:#4a5068">시간 비중</p>
+<div style="display:flex;gap:4px;height:44px"><div style="flex:90;background:#9aa0ae;border-radius:6px"></div><div style="flex:4.9;background:#d9622b;border-radius:6px"></div><div style="flex:5.2;background:#2a6fc9;border-radius:6px"></div></div>
+<p style="font-size:26px;color:#4a5068">오차 비중</p>
+<div style="display:flex;gap:4px;height:44px"><div style="flex:72.9;background:#9aa0ae;border-radius:6px"></div><div style="flex:10.7;background:#d9622b;border-radius:6px"></div><div style="flex:16.4;background:#2a6fc9;border-radius:6px"></div></div>
+<p style="font-size:26px;line-height:1.5">급락 시간은 <b>5.2%</b>뿐인데 오차의 <b>16.4%</b><br><span style="color:#6b7080">회색 평소 · 주황 급등 · 파랑 급락</span></p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6b7080">MAPE·편의는 가격 20원 미만이면 20원으로 나눔 · 출처: price_targets · price_regimes · price_adjust</p>
+<aside>기업에서 주신 평소 가격 목표 네 가지를 전체 시간 기준으로 점검했습니다. 네 개 모두 조금씩 못 미쳤습니다. 오차를 나눠 보면 급락 시간은 전체 시간의 5%뿐인데 오차의 16%를 차지합니다. 0원 근처로 떨어지는 시간을 높게 예측하기 때문입니다. 비중, 최근 오차 보정, 2단계 모델 등을 시험했지만 MAE는 거의 그대로였고, 편의는 급락 경보일 낮 시간을 낮추면 목표 안에 들어옵니다.</aside>
+</section>

@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+catboost_info/
+*.pyc
+.env
+
+# 배포 빌드 결과 (Render 가 deploy/build_site.py 로 다시 만듦)
+public/
+
+# 기타
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

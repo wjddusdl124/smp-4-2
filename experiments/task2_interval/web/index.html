@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMP 80% 예측 범위</title>
+  <meta name="description" content="D-1 육지 SMP 예측에 80% 예측 범위를 함께 제시한 과제 2 결과">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark" aria-hidden="true"></span>
+        SMP 예측 범위
+      </a>
+      <nav class="nav-links" aria-label="섹션">
+        <a href="#criteria">성공 기준</a>
+        <a href="#explore">예측 범위</a>
+        <a href="#compare">방법 비교</a>
+        <a href="#hourly">시간대</a>
+        <a href="#spikeDays">급등일</a>
+        <a href="#method">만든 방법</a>
+        <a href="glance.html" class="nav-ext">한눈에</a>
+        <a href="guide.html" class="nav-ext">설명서</a>
+      </nav>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="밝게/어둡게 전환">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- ── 개요 ───────────────────────────────────── -->
+    <section class="hero wrap">
+      <p class="eyebrow">과제 2 · 육지 SMP · D-1 예측 · 시험 구간 2026.1.1 – 9.30</p>
+      <h1>예측값 하나 대신,<br>믿을 수 있는 <em>80% 범위</em>를 함께</h1>
+      <p class="lead">
+        전날(D-1)에 다음 날 24시간의 육지 SMP를 예측하면서 하한(10% 분위)·중앙값·상한(90% 분위)을 함께 냅니다.
+        LightGBM과 Chronos-2를 분위수별로 가중 앙상블하고, 2025년 오차로 등각 보정해
+        실제 가격이 범위 안에 들어오는 비율을 80%에 맞췄습니다.
+      </p>
+      <p class="verdict" id="verdict"></p>
+    </section>
+
+    <!-- ── 성공 기준 점검 ─────────────────────────── -->
+    <section class="section wrap" id="criteria">
+      <div class="sec-head">
+        <div>
+          <h2>성공 기준 점검</h2>
+          <p class="sec-sub">시험 구간 2026.1.1 – 9.30(6,528시간), 최종 모델 기준. 시험 결과를 본 뒤 설정은 바꾸지 않았습니다.</p>
+        </div>
+      </div>
+
+      <h3 class="group-title">예측 범위 <span class="muted">· 80% 범위 (하한 10% · 상한 90% 분위)</span></h3>
+      <div class="kpis kpis-3" id="kpisRange"></div>
+
+      <h3 class="group-title">예측 정확도 <span class="muted">· 중앙값 예측</span></h3>
+      <div class="kpis" id="kpisPoint"></div>
+
+      <p class="note-plain">
+        rMAE = 모델 MAE ÷ 「어제 같은 시각」 MAE.
+        MAPE·편의는 운영 코드와 같이 분모를 max(실제 SMP, 20원)으로 둡니다(저가 시간대 발산 방지).
+        편의가 +이면 실제보다 높게 예측한 것입니다.
+      </p>
+    </section>
+
+    <!-- ── 예측 범위 탐색 ─────────────────────────── -->
+    <section class="section wrap" id="explore">
+      <div class="sec-head">
+        <div>
+          <h2>예측 범위 살펴보기</h2>
+          <p class="sec-sub">최종 모델(앙상블 + 등각 보정)의 시험 구간 예측. 범위를 벗어난 시간은 주황 점으로 표시합니다.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="seg" id="spanSeg" role="group" aria-label="보기 기간">
+            <button type="button" data-days="1">1일</button>
+            <button type="button" data-days="7" class="on">7일</button>
+            <button type="button" data-days="30">30일</button>
+          </div>
+          <div class="date-nav">
+            <button type="button" class="icon-btn" id="prevBtn" aria-label="이전">‹</button>
+            <input type="date" id="dateInput" min="2026-01-01" max="2026-09-30" aria-label="시작 날짜">
+            <button type="button" class="icon-btn" id="nextBtn" aria-label="다음">›</button>
+          </div>
+          <div class="presets" id="presets"></div>
+        </div>
+
+        <div class="legend">
+          <span><i class="sw sw-band"></i>80% 범위</span>
+          <span><i class="sw sw-line sw-median"></i>예측 중앙값</span>
+          <span><i class="sw sw-line sw-actual"></i>실제 SMP</span>
+          <span><i class="sw sw-dot"></i>범위 밖</span>
+        </div>
+
+        <div class="chart" id="tsChart" style="height:360px"></div>
+
+        <div class="window-stats" id="windowStats"></div>
+      </div>
+    </section>
+
+    <!-- ── 방법 비교 ──────────────────────────────── -->
+    <section class="section wrap" id="compare">
+      <div class="sec-head">
+        <div>
+          <h2>6가지 방법 비교</h2>
+          <p class="sec-sub">왼쪽 위로 갈수록 좋습니다 — 커버리지는 목표대(75–85%) 안, 폭은 좁게.</p>
+        </div>
+        <div class="seg" id="periodSeg" role="group" aria-label="평가 구간">
+          <button type="button" data-p="test" class="on">시험 2026</button>
+          <button type="button" data-p="calib">보정 2025</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-title">커버리지 vs 평균 폭</h3>
+          <div class="chart" id="scatter" style="height:340px"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3 class="card-title">월별 추이 <span class="muted">· 최종 모델, 시험 구간</span></h3>
+            <select id="monthMetric" class="select" aria-label="월별 지표">
+              <option value="cov">커버리지</option>
+              <option value="rmae">rMAE</option>
+              <option value="mae">MAE</option>
+              <option value="mape">MAPE</option>
+              <option value="bias">편의</option>
+            </select>
+          </div>
+          <div class="chart" id="monthly" style="height:340px"></div>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-scroll">
+          <table class="tbl" id="evalTable"></table>
+        </div>
+        <p class="note">
+          <b class="ok-mark">✓</b> 표시는 성공 기준 충족. Winkler: 범위 폭에 벗어난 정도의 벌점을 더한 값(낮을수록 좋음).
+          벗어남: 하한 아래 / 상한 위 비율. A·B는 같은 LightGBM 중앙값을 써서 정확도 지표가 같습니다.
+          <span id="calibNote"></span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ── 시간대별 ──────────────────────────────── -->
+    <section class="section wrap" id="hourly">
+      <div class="sec-head">
+        <div>
+          <h2>시간대별 커버리지</h2>
+          <p class="sec-sub">태양광이 많은 낮 시간에 단일 모델의 범위가 자주 빗나갑니다. 시간대 × 평일/휴일 48개 그룹별 등각 보정이 이를 메웁니다.</p>
+        </div>
+        <div class="seg" id="hourMetricSeg" role="group" aria-label="지표">
+          <button type="button" data-m="picp" class="on">커버리지</button>
+          <button type="button" data-m="mpiw">평균 폭</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="legend" id="hourLegend"></div>
+        <div class="chart" id="hourChart" style="height:320px"></div>
+      </div>
+    </section>
+
+    <!-- ── 급등일 vs 일반일 (과제 기준) ─────────── -->
+    <section class="section wrap" id="spikeDays">
+      <div class="sec-head">
+        <div>
+          <h2>급등일 vs 일반일</h2>
+          <p class="sec-sub">급등일 = 그날 최고 SMP ≥ 직전 28일 「일 최고 SMP」 중앙값 × 1.25 (2021년 이후 59일). 기준값은 전날 알 수 있지만, 급등 여부는 사후 구분입니다.</p>
+        </div>
+        <div class="seg" id="spkPeriodSeg" role="group" aria-label="평가 구간">
+          <button type="button" data-p="test" class="on">시험 2026</button>
+          <button type="button" data-p="calib">보정 2025</button>
+        </div>
+      </div>
+      <div class="card table-card">
+        <div class="table-scroll"><table class="tbl" id="spkMethodTable"></table></div>
+        <p class="note" id="spkMethodNote"></p>
+      </div>
+      <div class="card table-card">
+        <div class="table-scroll"><table class="tbl" id="spkPeakTable"></table></div>
+        <p class="note">최고가 시간 적중: 그날 실제 최고가가 나온 시각에 실제값이 80% 범위 안에 들었는지. 일반일도 60% 안팎인 것은, 하루 24개 값 중 가장 높은 값만 골랐기 때문에(선택 효과) 자연히 상한 쪽으로 치우치기 때문입니다. D-1 신호: 예측 상한의 하루 최고값이 급등 기준(직전 28일 중앙값 × 1.25) 이상인 날.</p>
+      </div>
+      <div class="callout">
+        <strong>해석</strong>
+        급등일과 일반일의 <b>하루 전체</b> 적중률·MAE는 거의 같거나 급등일이 오히려 낫습니다. 급등이 하루 중 단 1시간(주로 오전 10시)에만 일어나기 때문입니다.
+        하지만 그 1시간만 보면 분석한 급등일 13일 모두 최고가가 범위 상한을 평균 약 40원 넘었고, 전날 예측으로 급등을 알아챈 날은 0일입니다.
+        모든 방법이 같은 한계를 보이므로 범위 계산 방식의 문제가 아니라 <b>입력에 급등 원인(공급 쪽 사건) 정보가 없는 것</b>이 원인입니다.
+      </div>
+    </section>
+
+    <!-- ── 급등·급락 ─────────────────────────────── -->
+    <section class="section wrap" id="regime">
+      <div class="sec-head">
+        <div>
+          <h2>참고: 시간 단위 급변</h2>
+          <p class="sec-sub">급등일과 별개로, 시간 하나하나를 어제 같은 시각과 비교한 분류. 2025년 분포 상위 5%(+29.6원 이상) 오르면 급등, 하위 5%(−28.0원 이하) 내리면 급락.</p>
+        </div>
+      </div>
+      <div class="regimes" id="regimes"></div>
+      <div class="callout">
+        <strong>해석</strong>
+        범위는 평소의 불확실성은 잘 잡지만(일반 시간 커버리지 82.9%), 급등·급락은 과거 SMP와 수요예측만으로는
+        설명되지 않는 공급 측 사건(발전기 정지·출력제어 등)에서 많이 생깁니다. 급변 시간에는 범위만으로 부족하므로
+        과제 1의 급락 판별기 같은 별도 경보와 함께 써야 합니다.
+      </div>
+    </section>
+
+    <!-- ── 만든 방법 ─────────────────────────────── -->
+    <section class="section wrap" id="method">
+      <div class="sec-head">
+        <div>
+          <h2>어떻게 만들었나</h2>
+          <p class="sec-sub">모든 오차와 범위는 학습에 쓰지 않은 기간의 예측(out-of-sample)으로만 만들었습니다.</p>
+        </div>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <span class="step-n">1</span>
+          <h3>입력 — 전날 알 수 있는 값만</h3>
+          <p>D-1까지의 SMP, 전력거래소 하루전 수요예측, 달력·공휴일, D-2까지의 태양광 실적으로 만든 설비 증가 대리지표. 회사 태양광 전망 <code>pv_fcst</code>는 D일 실측 기상으로 만든 값이라 제외.</p>
+        </li>
+        <li>
+          <span class="step-n">2</span>
+          <h3>세 가지 분위수 예측</h3>
+          <p>LightGBM 분위수 회귀(직전 연도까지 학습 → 다음 해 예측), Chronos-2 + 수요예측 공변량, Chronos-2 단변량(학습 없이 D-1 23시까지 2,048시간만 보고 예측).</p>
+        </li>
+        <li>
+          <span class="step-n">3</span>
+          <h3>분위수별 가중 앙상블</h3>
+          <p>하한·중앙·상한마다 2025년 pinball loss가 가장 작은 가중치를 따로 고릅니다.</p>
+          <div id="weights" class="weights"></div>
+        </li>
+        <li>
+          <span class="step-n">4</span>
+          <h3>등각 보정 (CQR)</h3>
+          <p>시간대 × 평일/휴일 48개 그룹마다 2025년 오차로 하한·상한을 넓히거나 좁혀 커버리지를 80%에 맞춥니다. 하한은 0 미만이면 0으로 자르고, 분위수가 뒤집히면 정렬합니다.</p>
+        </li>
+      </ol>
+
+      <div class="grid-3 split">
+        <div class="mini">
+          <span class="mini-k">학습</span>
+          <span class="mini-v">2021 – 2024</span>
+          <span class="mini-d">모델 학습</span>
+        </div>
+        <div class="mini">
+          <span class="mini-k">보정</span>
+          <span class="mini-v">2025</span>
+          <span class="mini-d">가중치 · 보정값 결정</span>
+        </div>
+        <div class="mini">
+          <span class="mini-k">시험</span>
+          <span class="mini-v">2026.1 – 9</span>
+          <span class="mini-d">최종 평가 1회</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 한계 ──────────────────────────────────── -->
+    <section class="section wrap" id="next">
+      <div class="sec-head"><div><h2>한계와 다음 단계</h2></div></div>
+      <div class="grid-2">
+        <div class="card plain">
+          <h3 class="card-title">급변 시간 커버리지 약 53%</h3>
+          <p>원전 정비·출력제어 계획 같은 공급 측 정보를 추가하거나, 과제 1 급락 판별기의 확률로 범위를 넓히는 방식이 다음 후보입니다.</p>
+        </div>
+        <div class="card plain">
+          <h3 class="card-title">월별 커버리지 편차</h3>
+          <p>9개월 중 8개월은 75–85% 안이고 5월만 조금 낮습니다. 실제 운영에서는 최근 오차로 보정값을 갱신하는 적응형 등각 보정(ACI)이 유효합니다. 이번 과제는 「보정값은 2025년에서만 정한다」는 규칙에 따라 적용하지 않았습니다.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      과제 2 — 80% 예측 범위 · 데이터 <code>results/*.csv</code> · 코드 <code>task2_interval.py</code>
+    </div>
+  </footer>
+
+  <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

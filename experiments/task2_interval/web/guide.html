@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMP 예측 범위 설명서</title>
+  <meta name="description" content="SMP 80% 예측 범위 웹사이트를 읽는 법, 결과 해석, 만든 근거를 쉽게 정리한 설명서">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="glance.css">
+  <style>
+    /* 설명서 전용 — 읽기 편한 문서 레이아웃 */
+    .doc { display: grid; grid-template-columns: 220px 1fr; gap: 40px; margin-top: 28px; align-items: start; }
+    .toc { position: sticky; top: 20px; font-size: 13.5px; }
+    .toc p { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; color: var(--brand); margin-bottom: 8px; }
+    .toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+    .toc a { display: block; padding: 5px 0 5px 14px; margin-left: -2px; border-left: 2px solid transparent; color: var(--ink-2); text-decoration: none; }
+    .toc a:hover { color: var(--ink); border-left-color: var(--brand); }
+    .paper { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 40px 48px; min-width: 0; }
+    .paper h1 { font-size: 30px; font-weight: 800; }
+    .paper .lede { color: var(--ink-2); font-size: 16px; margin-top: 10px; }
+    .paper h2 { font-size: 21px; font-weight: 800; margin: 52px 0 14px; padding-top: 6px; scroll-margin-top: 16px; }
+    .paper h2 .n { color: var(--brand); margin-right: 8px; }
+    .paper h3 { font-size: 16px; font-weight: 750; margin: 26px 0 8px; }
+    .paper p { margin: 10px 0; color: var(--ink-2); }
+    .paper p b, .paper li b { color: var(--ink); }
+    .paper ul, .paper ol.plain { padding-left: 20px; color: var(--ink-2); margin: 8px 0; }
+    .paper li { margin: 5px 0; }
+    .paper code { font-family: ui-monospace, Consolas, monospace; font-size: .87em; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
+    .box { border-radius: 12px; padding: 14px 18px; margin: 14px 0; background: var(--panel-2); color: var(--ink-2); }
+    .box b { color: var(--ink); }
+    .box.key { background: var(--brand-soft); }
+    .box.warn { background: var(--bad-soft); }
+    .box.good { background: var(--good-soft); }
+    .box-t { display: block; font-weight: 750; color: var(--ink); margin-bottom: 4px; }
+    .gl-tbl { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
+    .gl-tbl th, .gl-tbl td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+    .gl-tbl thead th { font-size: 12.5px; color: var(--ink-3); font-weight: 600; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .gl-tbl td { color: var(--ink-2); }
+    .gl-tbl td:first-child { color: var(--ink); font-weight: 650; white-space: nowrap; }
+    .gl-tbl .r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .gl-tbl tr.hl td { background: var(--brand-soft); }
+    .tbl-wrap { overflow-x: auto; }
+    .ok { color: var(--good); font-weight: 700; }
+    .no { color: var(--bad); font-weight: 700; }
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; counter-reset: f; }
+    .flow div { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: var(--ink-2); position: relative; }
+    .flow div b { display: block; color: var(--ink); font-size: 14px; margin-bottom: 2px; }
+    .flow div::before { counter-increment: f; content: "STEP " counter(f); font-size: 11px; font-weight: 800; color: var(--brand); }
+    .timeline { display: grid; grid-template-columns: 4fr 1fr 0.75fr; gap: 4px; margin: 14px 0 6px; font-size: 12.5px; font-weight: 700; color: #fff; text-align: center; }
+    .timeline span { padding: 8px 4px; border-radius: 8px; }
+    .timeline span:nth-child(1) { background: var(--t3); }
+    .timeline span:nth-child(2) { background: var(--t1); }
+    .timeline span:nth-child(3) { background: var(--t4); }
+    .qa dt { font-weight: 750; color: var(--ink); margin-top: 18px; }
+    .qa dt::before { content: "Q. "; color: var(--brand); }
+    .qa dd { margin: 6px 0 0; color: var(--ink-2); }
+    .qa dd::before { content: "A. "; font-weight: 700; color: var(--ink-3); }
+    @media (max-width: 900px) {
+      .doc { grid-template-columns: 1fr; gap: 16px; }
+      .toc { position: static; }
+      .toc ol { display: flex; flex-wrap: wrap; border: 0; gap: 4px; }
+      .toc a { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; margin: 0; }
+      .paper { padding: 24px 20px; }
+      .flow { grid-template-columns: 1fr 1fr; }
+    }
+    @media print {
+      .topbar, .toc, .foot { display: none; }
+      .doc { display: block; }
+      .paper { box-shadow: none; border: 0; padding: 0; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="logo" href="glance.html">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg>
+        SMP 예측 범위
+      </a>
+      <nav class="tabs" aria-label="페이지">
+        <a href="glance.html">한눈에</a>
+        <a href="index.html">상세 분석</a>
+        <a href="guide.html" class="on" aria-current="page">설명서</a>
+      </nav>
+      <button class="theme" id="themeBtn" type="button" aria-label="밝게/어둡게 전환">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="wrap doc">
+    <nav class="toc" aria-label="목차">
+      <p>CONTENTS</p>
+      <ol>
+        <li><a href="#s1">1. 이 사이트는 무엇인가</a></li>
+        <li><a href="#s2">2. 먼저 알아둘 말</a></li>
+        <li><a href="#s3">3. 「한눈에」 읽는 법</a></li>
+        <li><a href="#s4">4. 「상세 분석」 읽는 법</a></li>
+        <li><a href="#s5">5. 결과 해석</a></li>
+        <li><a href="#s6">6. 이렇게 만든 근거</a></li>
+        <li><a href="#s7">7. 한계와 다음 단계</a></li>
+        <li><a href="#s8">8. 자주 묻는 질문</a></li>
+        <li><a href="#s9">9. 파일과 숫자 출처</a></li>
+      </ol>
+    </nav>
+
+    <article class="paper">
+      <p class="eyebrow">Guide</p>
+      <h1>SMP 예측 범위 설명서</h1>
+      <p class="lede">이 웹사이트가 무엇을 보여 주는지, 숫자를 어떻게 읽으면 되는지, 왜 이렇게 만들었는지를 처음 보는 사람도 이해할 수 있게 정리했습니다.</p>
+
+      <div class="box key">
+        <span class="box-t">30초 요약</span>
+        전날 내일 24시간의 전기 도매가격(SMP)을 예측하면서, <b>“실제 가격이 10번 중 8번은 들어올 범위”</b>를 함께 냈습니다.
+        2026년 1~9월에 시험해 보니 실제로 <b>80.0%</b>가 범위 안에 들어와 <span class="ok">범위 목표(75~85%)를 달성</span>했습니다.
+        다만 예측값 자체의 정확도(평균 오차 7.85원)는 목표(rMAE 0.65·MAE 7.0원·MAPE 5%·편의 ±1.5%)에 <span class="no">아직 못 미칩니다</span>.
+      </div>
+
+      <!-- 1 -->
+      <h2 id="s1"><span class="n">1</span>이 사이트는 무엇인가</h2>
+      <p>
+        <b>SMP(계통한계가격)</b>는 전력시장에서 시간마다 정해지는 전기 도매가격입니다(단위: 원/kWh). 발전사·판매사는 내일 가격을 미리 알아야 입찰과 운영 계획을 세울 수 있습니다.
+      </p>
+      <p>
+        그런데 “내일 13시 SMP는 112원”처럼 <b>숫자 하나</b>만 주면, 그 숫자를 얼마나 믿어도 되는지 알 수 없습니다. 날씨 예보가 “비 올 확률 70%”를 함께 알려 주듯,
+        이 과제는 예측값과 함께 <b>“아마 100~125원 사이일 것(80% 확률)”</b>이라는 범위를 함께 알려 주는 것이 목표입니다.
+      </p>
+      <p>사이트는 세 페이지로 되어 있습니다.</p>
+      <table class="gl-tbl">
+        <thead><tr><th>페이지</th><th>누구를 위한 화면인가</th><th>담긴 내용</th></tr></thead>
+        <tbody>
+          <tr><td><a href="glance.html">한눈에</a></td><td>처음 보는 사람, 결론만 빨리 알고 싶은 사람</td><td>핵심 숫자 4개, 하루 예시, 시간대별·월별 적중률, 목표 달성표</td></tr>
+          <tr><td><a href="index.html">상세 분석</a></td><td>방법을 비교·검증하고 싶은 사람</td><td>9개월 전체 탐색, 6가지 방법 비교표, 시간대·급변 분석, 만든 방법</td></tr>
+          <tr><td>설명서(이 문서)</td><td>모두</td><td>용어 풀이, 화면 읽는 법, 해석과 근거</td></tr>
+        </tbody>
+      </table>
+
+      <!-- 2 -->
+      <h2 id="s2"><span class="n">2</span>먼저 알아둘 말</h2>
+      <div class="tbl-wrap">
+      <table class="gl-tbl">
+        <thead><tr><th>용어</th><th>쉬운 뜻</th><th>예시 · 읽는 법</th></tr></thead>
+        <tbody>
+          <tr><td>육지 SMP</td><td>제주를 뺀 육지 전력시장의 시간별 도매가격(원/kWh)</td><td>2026년 1~9월 평균 약 117원</td></tr>
+          <tr><td>D-1 예측</td><td>전날(D-1)에 다음 날(D) 24시간을 예측</td><td>내일 실제 가격·실제 날씨는 쓸 수 없음</td></tr>
+          <tr><td>중앙값 (예측값)</td><td>가장 가능성 높은 가격. 실제가 이보다 높을 확률과 낮을 확률이 반반</td><td>그래프의 파란 (점)선</td></tr>
+          <tr><td>하한 · 상한</td><td>하한 = 실제가 이보다 낮을 확률 10%, 상한 = 이보다 높을 확률 10%</td><td>그래서 그 사이가 80% 범위</td></tr>
+          <tr><td>80% 예측 범위</td><td>하한~상한 사이 구간</td><td>그래프의 파란 띠</td></tr>
+          <tr><td>커버리지 (적중률, PICP)</td><td>실제 가격이 범위 안에 들어온 시간의 비율</td><td>80%에 가까울수록 범위가 “정직”함. 너무 낮으면 범위가 좁고, 너무 높으면 쓸데없이 넓음</td></tr>
+          <tr><td>범위 폭 (MPIW)</td><td>상한 − 하한의 평균</td><td>커버리지가 같다면 좁을수록 쓸모 있음</td></tr>
+          <tr><td>Winkler score</td><td>범위 폭 + 범위를 벗어난 만큼의 벌점</td><td>“좁으면서도 잘 맞는가”를 한 숫자로. 낮을수록 좋음</td></tr>
+          <tr><td>pinball loss</td><td>분위수(10%·50%·90%) 예측이 얼마나 정확한지 재는 점수</td><td>낮을수록 좋음. 앙상블 가중치를 고를 때 사용</td></tr>
+          <tr><td>단순 예측</td><td>“내일 같은 시각 가격 = 오늘 같은 시각 가격”</td><td>모델이 이것보다 나아야 의미가 있음</td></tr>
+          <tr><td>MAE</td><td>예측값이 평균 몇 원 틀렸는지</td><td>7.85원 = 평균 7.85원 빗나감</td></tr>
+          <tr><td>rMAE</td><td>모델 MAE ÷ 단순 예측 MAE</td><td>0.70 = 단순 예측보다 오차가 30% 작음. 1보다 작아야 의미 있음</td></tr>
+          <tr><td>MAPE</td><td>가격 대비 평균 몇 % 틀렸는지</td><td>가격이 0원 근처면 %가 폭발하므로 분모를 최소 20원으로 둠(운영 코드와 같은 규칙)</td></tr>
+          <tr><td>편의 (bias)</td><td>한쪽으로 치우친 정도. +면 실제보다 높게, −면 낮게 예측하는 습관</td><td>MAPE와 같은 방식(분모 최소 20원)으로 % 계산</td></tr>
+          <tr><td>급등일</td><td>그날 최고 SMP가 직전 28일 「하루 최고 SMP」의 중앙값보다 25% 이상 높은 날</td><td>2021년 이후 59일. 직전 28일 중앙값이 130원이면 그날 최고가가 162.5원 이상일 때</td></tr>
+          <tr><td>등각 보정 (CQR)</td><td>지난해 실제 오차를 보고 범위를 넓히거나 좁혀 커버리지를 80%에 맞추는 방법</td><td>“작년에 범위가 3원쯤 좁았으니 올해는 3원 넓히자”</td></tr>
+          <tr><td>앙상블</td><td>여러 모델의 예측을 가중 평균</td><td>모델마다 잘하는 부분이 달라 섞으면 안정적</td></tr>
+          <tr><td>out-of-sample</td><td>모델이 학습할 때 보지 못한 기간의 예측</td><td>시험 점수는 반드시 처음 보는 문제로 매겨야 하는 것과 같음</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <!-- 3 -->
+      <h2 id="s3"><span class="n">3</span>「한눈에」 페이지 읽는 법</h2>
+
+      <h3>① 큰 숫자 카드 4개</h3>
+      <ul>
+        <li><b>범위 적중률 80.0%</b> — 9개월(6,528시간) 동안 실제 가격이 범위 안에 들어온 비율입니다. 목표 75~85% 안이므로 “80% 범위”라는 이름이 실제로 맞았다는 뜻입니다.</li>
+        <li><b>범위 폭 25.0원</b> — 범위가 평균 25원 정도 너비라는 뜻입니다. 예측값이 117원이면 범위는 대략 105~130원입니다.</li>
+        <li><b>예측 오차 7.85원</b> — 예측값(중앙값)이 평균 7.85원 빗나갔습니다. 단순 예측(11.20원)보다 30% 작습니다.</li>
+        <li><b>목표 달성 1/5</b> — 과제의 성공 기준 5개 중 범위 기준 1개만 달성했습니다(아래 목표 달성표 참고).</li>
+      </ul>
+
+      <h3>② 그래프 읽는 법 · 하루 예측 vs 실제</h3>
+      <p>파란 띠(범위) 안에 검은 선(실제)이 들어 있으면 범위가 맞은 것이고, 빨간 점은 띠를 벗어난 시간입니다. <b>빨간 점이 하루 24시간 중 4~5개(약 20%) 나오는 것이 정상</b>입니다. 하나도 없으면 범위가 지나치게 넓은 것일 수 있습니다.</p>
+      <p>날짜 버튼으로 다른 날을 볼 수 있습니다. 「평범한 날」(1월 14일)은 24시간 중 20시간(83%)이 맞아 전체 평균과 비슷한 날이고, 「가장 크게 빗나간 날」은 범위를 벗어난 정도가 가장 컸던 날입니다. 그래프 아래 문장이 그날의 결과를 말로 풀어 줍니다.</p>
+
+      <h3>③ 몇 시에 잘 맞고, 몇 시에 덜 맞을까</h3>
+      <p>막대 하나가 한 시간대(1시~24시)의 적중률입니다. 초록 띠(75~85%) 안이면 목표대로, <b>주황 막대는 목표보다 낮은 시간</b>입니다.
+        9시·12시·13시·18시가 덜 맞는데, 낮에는 태양광 발전량에 따라 가격이 크게 출렁이기 때문입니다. 밤·새벽(1~8시, 21~23시)은 80% 이상으로 안정적입니다.</p>
+
+      <h3>④ 목표 달성표</h3>
+      <p>과제에서 정한 기준 5개와 실제 결과입니다. ✓는 달성, ✕는 미달입니다. 자세한 해석은 <a href="#s5">5장</a>에 있습니다.</p>
+
+      <h3>⑤ 급등일에는 「그 1시간」을 놓칩니다</h3>
+      <p>과제 기준 급등일(그날 최고 SMP ≥ 직전 28일 하루 최고가 중앙값 × 1.25)만 따로 본 결과입니다. 2025년 7일, 2026년 1~9월 6일, 모두 13일입니다.</p>
+      <ul>
+        <li><b>빨간 카드 3개</b>: 최고가 시간이 범위 안에 든 급등일 수(0/13일), 최고가가 상한을 넘은 평균 폭(약 42원), 전날 예측만으로 미리 알아챈 급등일 수(0/13일)</li>
+        <li><b>일반일 vs 급등일 표</b>: 위쪽 「하루 전체 시간 적중률」은 두 날이 비슷하지만, 아래쪽 「최고가 시간 적중률」과 「최고가를 낮게 본 정도」는 크게 다릅니다(빨간 글씨). 오른쪽 위 버튼으로 2025년도 볼 수 있습니다.</li>
+        <li><b>시간대별 평균 그래프</b>: 급등일 13일을 평균하면 오전 10시에만 실제 가격(검은 선)이 범위 위로 뾰족하게 솟습니다.</li>
+        <li><b>급등일 목록</b>: 2026년 날짜를 누르면 위의 「하루 예측 vs 실제」 그래프가 그날로 바뀝니다.</li>
+      </ul>
+
+      <h3>⑥ 달마다 얼마나 맞았나</h3>
+      <p>월별 적중률, 범위 폭, 예측 오차, 단순 예측 오차입니다. 9개월 중 8개월이 목표 안이고 5월(73.8%)만 조금 낮습니다. 모든 달에서 예측 오차가 단순 예측 오차보다 작습니다.</p>
+
+      <!-- 4 -->
+      <h2 id="s4"><span class="n">4</span>「상세 분석」 페이지 읽는 법</h2>
+      <h3>성공 기준 점검</h3>
+      <p>범위 지표 3개(커버리지·폭·Winkler)와 정확도 지표 4개(rMAE·MAE·MAPE·편의)를 카드로 보여 줍니다. 각 카드의 작은 막대에서 <b>세로선이 기준값</b>, 검은 눈금이 실제 값입니다. 카드 아래에는 기준까지 얼마나 남았는지가 적혀 있습니다(예: “MAE를 7.28원까지 0.57원 더 줄여야 함”).</p>
+      <h3>예측 범위 살펴보기</h3>
+      <p>9개월 전체를 1일·7일·30일 단위로 넘겨 볼 수 있습니다. 마우스를 올리면 그 시각의 실제값·예측값·범위가 나오고, 아래 6칸은 <b>지금 보고 있는 기간</b>의 커버리지·폭·MAE·rMAE·MAPE·편의입니다. ✓는 그 기간에 기준을 충족했다는 뜻입니다.</p>
+      <h3>6가지 방법 비교</h3>
+      <p>왼쪽 그림은 가로가 범위 폭, 세로가 커버리지입니다. <b>초록 띠 안에 있으면서 왼쪽(좁은 쪽)에 있을수록 좋은 방법</b>입니다. 오른쪽 그림은 월별 추이이며, 드롭다운으로 커버리지·rMAE·MAE·MAPE·편의를 바꿔 볼 수 있습니다. 「시험 2026」·「보정 2025」 버튼으로 두 기간을 비교할 수 있습니다.</p>
+      <table class="gl-tbl">
+        <thead><tr><th>기호</th><th>방법</th><th>한 줄 설명</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>잔차 분위수</td><td>LightGBM 예측값에 “작년 오차의 10%·90% 값”을 더하고 빼는 가장 쉬운 방법</td></tr>
+          <tr><td>B</td><td>LightGBM 분위수 회귀</td><td>하한·중앙·상한을 각각 직접 학습</td></tr>
+          <tr><td>C</td><td>Chronos-2 + 수요예측</td><td>아마존의 시계열 기초 모델. 최근 2,048시간 가격과 내일 수요예측을 보고 바로 예측(따로 학습 안 함)</td></tr>
+          <tr><td>D</td><td>Chronos-2 단변량</td><td>C에서 수요예측을 빼고 가격만 사용</td></tr>
+          <tr><td>E</td><td>앙상블 (보정 전)</td><td>B·C·D를 분위수마다 다른 가중치로 섞음</td></tr>
+          <tr class="hl"><td>F</td><td>앙상블 + 등각 보정 (최종)</td><td>E의 범위를 2025년 오차로 시간대·평일/휴일별 조정</td></tr>
+        </tbody>
+      </table>
+      <h3>시간대별 커버리지</h3>
+      <p>시간대별 그래프는 B·E·F 세 방법을 겹쳐 보여 줍니다. LightGBM(B)은 낮 시간에 50%대까지 떨어지지만 최종(F)은 대부분 초록 띠 근처로 올라온 것이 보정의 효과입니다.</p>
+      <h3>급등일 vs 일반일</h3>
+      <p>첫 번째 표는 6가지 방법 각각의 급등일 / 일반일 시간 단위 지표입니다(“급등일 값 / 일반일 값” 순서). 두 번째 표는 최종 모델의 <b>하루 최고가</b>만 따로 본 것으로, 급등일의 문제가 여기서 드러납니다.
+        「참고: 시간 단위 급변」은 급등일과 다른 분류(시간 하나하나를 어제 같은 시각과 비교)로, 막대는 <b>회색 = 하한 아래, 파랑 = 범위 안, 주황 = 상한 위</b> 비율입니다.</p>
+
+      <!-- 5 -->
+      <h2 id="s5"><span class="n">5</span>결과 해석</h2>
+      <h3>잘 된 점</h3>
+      <div class="box good">
+        <span class="box-t">범위가 “말한 만큼” 맞는다</span>
+        최종 모델의 커버리지는 <b>80.0%</b>입니다. 하한 아래로 벗어난 시간 8.5%, 상한 위로 벗어난 시간 11.6%로 양쪽이 비슷하게 나뉩니다.
+        처음 시험 삼아 만든 범위는 실제 커버리지가 52%에 그쳤고, LightGBM만 쓰면 68.6%였던 것과 비교하면 큰 개선입니다.
+      </div>
+      <ul>
+        <li><b>좁으면서도 잘 맞는다</b>: 쉬운 방법(A)보다 범위가 1.6원 좁은데 커버리지는 5.6%p 높습니다. 그래서 Winkler score가 6개 방법 중 가장 낮습니다(37.7).</li>
+        <li><b>시기가 바뀌어도 안정적</b>: 9개월 중 8개월이 75~85% 안입니다.</li>
+        <li><b>예측값도 단순 예측보다 낫다</b>: 평균 오차 7.85원으로 단순 예측(11.20원)보다 30% 작습니다.</li>
+      </ul>
+
+      <h3>부족한 점</h3>
+      <div class="tbl-wrap">
+      <table class="gl-tbl">
+        <thead><tr><th>기준</th><th class="r">목표</th><th class="r">결과</th><th>판정</th><th>무슨 뜻인가</th></tr></thead>
+        <tbody>
+          <tr><td>범위 커버리지</td><td class="r">75~85%</td><td class="r">80.0%</td><td class="ok">달성</td><td>범위가 정직하게 만들어짐</td></tr>
+          <tr><td>rMAE (목표)</td><td class="r">0.65 이하</td><td class="r">0.700</td><td class="no">미달</td><td>MAE를 7.28원까지, 0.57원 더 줄여야 함</td></tr>
+          <tr><td>MAE (도전)</td><td class="r">7.0원 이하</td><td class="r">7.85원</td><td class="no">미달</td><td>0.85원 부족</td></tr>
+          <tr><td>MAPE (보조)</td><td class="r">5.0% 미만</td><td class="r">8.03%</td><td class="no">미달</td><td>가격이 폭락한 30시간을 빼도 6.60%로 여전히 미달</td></tr>
+          <tr><td>편의 (보조)</td><td class="r">±1.5% 이내</td><td class="r">+1.81%</td><td class="no">미달</td><td>가격이 폭락한 30시간 탓이 대부분. 그 시간을 빼면 +0.35%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>
+        이번 과제의 핵심은 <b>“범위”</b>였고, 예측값(중앙값)은 기존 모델 조합을 그대로 썼습니다. 그래서 범위 기준은 달성했지만 정확도 기준은 달성하지 못했습니다.
+        참고로 6가지 방법 중 정확도 기준을 하나라도 충족한 방법은 없고, 가장 낮은 rMAE도 C(Chronos-2 + 수요예측)의 0.699입니다.
+      </p>
+      <div class="box">
+        <span class="box-t">편의가 +1.81%인데, 평균 오차를 평균 가격으로 나누면 −0.2%가 나오는 이유</span>
+        편의는 <b>시간마다</b> (예측 − 실제) ÷ max(실제, 20원)을 구해 평균 냅니다. 가격이 30원인 시간에 6원 높게 예측하면 +20%로 크게 잡히고,
+        150원인 시간에 6원 낮게 예측하면 −4%로 작게 잡힙니다. 즉 “싼 시간엔 높게, 비싼 시간엔 낮게” 예측하는 습관이 있으면 원 단위 평균은 0에 가까워도 % 편의는 +로 나옵니다.
+        이 사이트는 운영 코드와 같은 시간별 정의를 따릅니다.
+      </div>
+      <div class="box warn">
+        <span class="box-t">MAPE·편의를 끌어올린 30시간</span>
+        시험 기간 중 실제 가격이 <b>60원 이하로 폭락한 시간은 30시간(전체의 0.5%)</b>뿐이고, 대부분 태양광이 가장 많은 낮 12~13시입니다.
+        이때 실제 가격은 평균 11.7원이었는데 예측은 평균 79.5원이었습니다. 이 30시간만 빼고 계산하면
+        편의는 <b>+1.81% → +0.35%</b>(기준 충족 수준), MAPE는 <b>8.03% → 6.60%</b>가 됩니다.
+        즉 편의 미달의 대부분은 “평소 습관”이 아니라 <b>예측하지 못한 소수의 가격 폭락</b> 때문입니다.
+        단, 기준은 전체 시간으로 판정하므로 결과는 그대로 “미달”입니다.
+      </div>
+
+      <h3>급등일 vs 일반일</h3>
+      <p>급등일 정의: <b>그날 최고 SMP가 직전 28일 「하루 최고 SMP」 중앙값보다 25% 이상 높은 날</b>(2021년 이후 59일). 시험 기간에는 6일(1/21·1/22·1/23·2/4·3/16·4/1), 보정 기간 2025년에는 7일이 있습니다.
+        시험 기간만으로는 표본이 너무 작아, 2025년 7일도 같은 방법으로 다시 예측해 함께 봤습니다. 재현한 2026년 예측이 기존 결과와 완전히 같은 것(차이 0원)을 확인했습니다.</p>
+      <div class="tbl-wrap">
+      <table class="gl-tbl">
+        <thead><tr><th>최종 모델 · 시험 2026</th><th class="r">일반일 (267일)</th><th class="r">급등일 (6일)</th></tr></thead>
+        <tbody>
+          <tr><td>하루 전체 시간 적중률</td><td class="r">79.9%</td><td class="r">84.0%</td></tr>
+          <tr><td>평균 오차 MAE (하루 전체)</td><td class="r">7.87원</td><td class="r">6.70원</td></tr>
+          <tr><td>실제 최고가 평균</td><td class="r">141.7원</td><td class="r">182.3원</td></tr>
+          <tr><td>예측 중앙값의 하루 최고 평균</td><td class="r">135.3원</td><td class="r">129.5원</td></tr>
+          <tr><td>최고가를 낮게 본 정도</td><td class="r">6.3원</td><td class="r no">52.8원</td></tr>
+          <tr><td>최고가 시간 적중</td><td class="r">56%</td><td class="r no">0%</td></tr>
+          <tr><td>최고가 시간에 상한을 넘은 평균</td><td class="r">2.9원</td><td class="r no">39.4원</td></tr>
+          <tr><td>최고가 시각 맞힘 (±1시간)</td><td class="r">62%</td><td class="r">100%</td></tr>
+          <tr><td>전날 급등 신호 (예측 상한 ≥ 기준 × 1.25)</td><td class="r">0.4%</td><td class="r no">0%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>이 표에서 읽을 수 있는 것은 네 가지입니다.</p>
+      <ol class="plain">
+        <li><b>하루 전체로 보면 급등일이 오히려 잘 맞아 보입니다.</b> 적중률 84.0% 대 79.9%, MAE 6.70원 대 7.87원입니다. 급등이 하루 중 <b>단 1시간</b>에만 일어나기 때문입니다. 분석한 13일 모두 급등 기준을 넘은 시간이 1시간뿐이었고, 59일 전체로도 41일이 1시간이었습니다. 나머지 23시간은 평소와 다르지 않습니다.</li>
+        <li><b>그 1시간은 한 번도 못 잡았습니다.</b> 13일 모두 최고가가 범위 상한을 넘었고(2026년 평균 39.4원, 2025년 43.9원), 예측은 오른 폭(약 53원)의 대부분을 놓쳤습니다.</li>
+        <li><b>시각은 맞히는데 높이를 못 맞힙니다.</b> 2026년 급등일 6일 모두 최고가 시각(대부분 오전 10시)은 예측과 ±1시간 이내로 일치했습니다. 모델은 “10시쯤이 그날 가장 비싸다”는 것은 알지만 “평소보다 40~50원 더 비쌀 것”은 알지 못합니다.</li>
+        <li><b>전날 미리 알 수 없었습니다.</b> 예측 상한의 하루 최고값이 급등 기준(직전 28일 중앙값 × 1.25)에 닿은 급등일은 13일 중 0일입니다. 6가지 방법 모두 같은 한계를 보이므로, 범위를 만드는 방식이 아니라 <b>입력에 급등 원인 정보가 없는 것</b>이 원인입니다.</li>
+      </ol>
+      <div class="box">
+        <span class="box-t">일반일도 최고가 시간 적중이 56%밖에 안 되는 이유</span>
+        하루 24개 값 중 <b>가장 높은 값</b>만 골라 보면, 그 값은 원래 범위 위쪽으로 치우치기 쉽습니다(선택 효과). 그래서 “최고가 시간 적중”은 80%가 나올 수 없는 지표이고,
+        일반일 56%와 급등일 0%를 <b>서로 비교</b>하는 용도로만 써야 합니다.
+      </div>
+      <p>59일 전체를 보면 최고가 시각은 오전 10시(14일)와 오후 4시(11일)에 몰리고, 계절로는 8월(20일)이 가장 많습니다. 주말(5일)보다 평일(54일)에 훨씬 많이 생깁니다.
+        이런 1시간짜리 급등은 발전기 정지·출력제어 같은 <b>공급 쪽 사건</b>에서 많이 생기는데, 이 모델이 쓰는 입력(지난 가격·수요예측·달력)에는 그런 정보가 없습니다.</p>
+
+      <!-- 6 -->
+      <h2 id="s6"><span class="n">6</span>이렇게 만든 근거</h2>
+
+      <h3>6-1. 기간을 셋으로 나눈 이유</h3>
+      <div class="timeline" aria-hidden="true"><span>학습 2021–2024</span><span>보정 2025</span><span>시험 2026.1–9</span></div>
+      <ul>
+        <li><b>학습(2021~2024)</b>: 모델이 가격 패턴을 배우는 기간</li>
+        <li><b>보정(2025)</b>: 앙상블 가중치와 등각 보정값을 <b>여기서만</b> 정했습니다. 모델이 처음 보는 해이므로 “실전에서 생기는 오차”를 잴 수 있습니다.</li>
+        <li><b>시험(2026.1~9)</b>: 최종 점수를 <b>딱 한 번</b> 매긴 기간입니다. 시험 결과를 보고 설정을 다시 바꾸면 시험 문제를 보고 답을 고치는 것과 같아 점수가 부풀려지므로, 결과를 본 뒤에는 아무것도 바꾸지 않았습니다.</li>
+      </ul>
+
+      <h3>6-2. 범위를 “처음 보는 기간의 오차”로 만든 이유</h3>
+      <p>모델은 학습한 기간의 가격은 잘 맞힙니다(외운 문제). 그 오차로 범위를 잡으면 범위가 너무 좁아져 실제로는 52%~69%만 맞습니다. 그래서 모든 오차와 범위는 <b>학습에 쓰지 않은 기간의 예측(out-of-sample)</b>으로만 만들었습니다. LightGBM도 “2021~2024 학습 → 2025 예측”, “2021~2025 학습 → 2026 예측”처럼 항상 다음 해를 예측하게 했습니다.</p>
+
+      <h3>6-3. 전날 알 수 있는 정보만 쓴 이유</h3>
+      <p>실제 운영에서는 전날에 예측해야 하므로 내일의 실제 가격·실제 수요·실제 날씨는 쓸 수 없습니다. 사용한 입력은 다음과 같습니다.</p>
+      <ul>
+        <li>전날(D-1)까지의 SMP</li>
+        <li>전력거래소가 전날 발표하는 내일 수요예측</li>
+        <li>달력·공휴일</li>
+        <li>D-2까지의 태양광 실적으로 만든 “태양광 설비가 늘어난 정도” 지표</li>
+      </ul>
+      <div class="box warn">
+        <span class="box-t">회사 태양광 전망(pv_fcst)을 뺀 이유</span>
+        이 값은 이름은 “전망”이지만 실제로는 <b>당일 실측 기상</b>으로 만든 값이라, 전날에는 알 수 없는 정보가 섞여 있습니다(정보 누출).
+        실제로 오차가 2025년 308MW, 2026년 481MW로 크게 달라, 2025년 값에 이미 실측이 반영된 것으로 의심됩니다. 이걸 쓰면 시험 점수가 실제 운영보다 좋게 나오므로 제외했습니다.
+      </div>
+
+      <h3>6-4. 모델 세 개를 섞은 이유</h3>
+      <div class="flow">
+        <div><b>입력 준비</b>전날까지 알 수 있는 값만</div>
+        <div><b>모델 3개 예측</b>LightGBM, Chronos-2(+수요예측), Chronos-2(가격만)</div>
+        <div><b>가중 앙상블</b>하한·중앙·상한마다 따로 가중치</div>
+        <div><b>등각 보정</b>48개 그룹별로 범위 조정</div>
+      </div>
+      <p>LightGBM은 달력·수요 같은 규칙성을 잘 잡고, Chronos-2는 최근 가격 흐름을 잘 따라갑니다. 하나만 쓸 때보다 섞으면 범위 품질(pinball loss)이 좋아졌습니다.
+        가중치는 <b>2025년 pinball loss가 가장 작은 조합</b>으로 골랐습니다.</p>
+      <table class="gl-tbl">
+        <thead><tr><th>분위수</th><th class="r">LightGBM</th><th class="r">Chronos 수요예측</th><th class="r">Chronos 단변량</th></tr></thead>
+        <tbody>
+          <tr><td>하한 (10%)</td><td class="r">15%</td><td class="r">85%</td><td class="r">0%</td></tr>
+          <tr><td>중앙 (50%)</td><td class="r">15%</td><td class="r">80%</td><td class="r">5%</td></tr>
+          <tr><td>상한 (90%)</td><td class="r">25%</td><td class="r">75%</td><td class="r">0%</td></tr>
+        </tbody>
+      </table>
+
+      <h3>6-5. 등각 보정을 시간대 × 평일/휴일로 나눈 이유</h3>
+      <p>앙상블만으로는 커버리지가 75.2%로, 목표 하단에 걸쳐 있었습니다. 특히 낮 시간과 휴일에 범위가 자주 빗나갔습니다. 그래서 24개 시간대 × 평일/휴일 = <b>48개 그룹</b>으로 나눠, 그룹마다 2025년 실제 오차를 보고 하한·상한을 각각 얼마나 넓힐지(또는 좁힐지) 정했습니다. 그룹마다 2025년 자료가 평일 244일·휴일 121일 있어 값을 정하기에 충분합니다.
+        그 결과 커버리지가 75.2% → 80.0%로 올라갔고, 폭은 21.9원 → 25.0원으로 필요한 만큼만 넓어졌습니다.</p>
+
+      <h3>6-6. 지표 계산 규칙</h3>
+      <ul>
+        <li>하한이 0원 아래로 내려가면 0원으로 자릅니다(SMP는 음수가 되지 않음).</li>
+        <li>하한 &gt; 중앙 또는 중앙 &gt; 상한처럼 순서가 뒤집히면 정렬해서 고칩니다.</li>
+        <li>MAPE·편의의 분모는 max(실제, 20원)입니다. 가격이 0원 근처인 시간에 %가 무한대로 커지는 것을 막는 운영 코드(<code>scripts/step4_baseline.py</code>)의 규칙을 그대로 따랐습니다.</li>
+        <li>전날 실제값이 없는 24시간(8월 1일)은 단순 예측을 만들 수 없어 단순 예측 오차 계산에서만 뺐습니다. 실제값이 없는 24시간(7월 31일)은 모든 지표에서 빠집니다.</li>
+      </ul>
+
+      <!-- 7 -->
+      <h2 id="s7"><span class="n">7</span>한계와 다음 단계</h2>
+      <ul>
+        <li><b>급등일의 최고가 1시간을 못 잡음(0/13일)</b> — 급등일 범위를 하루 전체로 넓히면 23시간이 쓸데없이 넓어지므로, <b>최고가가 잘 나오는 시각(오전 10시·오후 4시)의 상한만</b> 넓히는 방식이 효율적입니다. 다만 전날 급등을 알려 줄 신호(원전 정비·발전기 정지·출력제어 계획 등 공급 쪽 정보)가 먼저 있어야 합니다.</li>
+        <li><b>정확도 목표 미달</b> — rMAE 0.65를 달성하려면 평균 오차를 0.57원 더 줄여야 합니다. 범위가 아니라 예측값(중앙값) 모델 자체를 개선해야 하는 부분입니다.</li>
+        <li><b>낮 시간 가격 폭락을 못 따라감</b> — 60원 이하로 떨어진 30시간이 편의(+1.81%)의 대부분과 MAPE의 일부를 만듭니다. 태양광 출력제어처럼 낮 시간 가격 폭락을 미리 알려 주는 입력이 생기면 편의 기준은 충족 가능성이 큽니다.</li>
+        <li><b>월별 편차(5월 73.8%)</b> — 실제 운영에서는 최근 오차로 보정값을 계속 갱신하는 적응형 등각 보정(ACI)이 효과적입니다. 이번에는 “보정값은 2025년에서만 정한다”는 규칙 때문에 적용하지 않았습니다.</li>
+      </ul>
+
+      <!-- 8 -->
+      <h2 id="s8"><span class="n">8</span>자주 묻는 질문</h2>
+      <dl class="qa">
+        <dt>80% 범위면 20%는 틀린 건가요?</dt>
+        <dd>네, 일부러 그렇게 만든 것입니다. 10번 중 2번은 범위를 벗어나도록 설계해야 범위가 쓸데없이 넓어지지 않습니다. 100% 맞는 범위는 “0원~200원”처럼 아무 쓸모가 없습니다.</dd>
+        <dt>커버리지가 높을수록 좋은 것 아닌가요?</dt>
+        <dd>아닙니다. 90%가 나왔다면 범위가 필요 이상으로 넓다는 뜻입니다. 그래서 목표가 “80% 이상”이 아니라 “75~85%”입니다.</dd>
+        <dt>Chronos-2(C) 혼자가 MAE 7.83원으로 최종(7.85원)보다 조금 나은데, 왜 C를 최종으로 고르지 않았나요?</dt>
+        <dd>이 과제의 목표는 범위입니다. C 혼자는 커버리지가 73.1%로 목표에 못 미치고, Winkler도 38.6으로 최종(37.7)보다 나쁩니다. 앙상블의 이점은 예측값보다 범위 품질에서 나타납니다. 그리고 시험 결과를 보고 모델을 바꾸는 것은 규칙 위반입니다.</dd>
+        <dt>시험 기간 결과를 보고 고치면 더 좋아지지 않나요?</dt>
+        <dd>시험 점수는 좋아지겠지만 그건 “답을 보고 고친 점수”라 실제 운영에서는 재현되지 않습니다. 그래서 설정은 2025년에서만 정하고 2026년은 한 번만 평가했습니다.</dd>
+        <dt>급등일의 하루 적중률(84%)이 일반일(80%)보다 높은데, 왜 급등일에 약하다고 하나요?</dt>
+        <dd>급등은 하루 중 1시간에만 일어나서 나머지 23시간이 적중률을 끌어올리기 때문입니다. 실무에서 중요한 것은 그 1시간의 최고가인데, 13일 모두 범위를 평균 40원 넘게 벗어났습니다. 그래서 급등일은 하루 평균이 아니라 최고가 시간으로 평가해야 합니다.</dd>
+        <dt>급등일 표본이 6일인데 믿을 만한가요?</dt>
+        <dd>비율(%)은 하루만 달라져도 크게 움직이므로 조심해야 합니다. 그래서 2025년 7일을 더해 13일로 봤고, 두 해 모두 “최고가 시간 적중 0%, 상한 초과 약 40원, 전날 신호 0%”로 같은 결과가 나왔습니다. 방향은 분명하지만 정확한 수치는 표본이 쌓이면 달라질 수 있습니다.</dd>
+        <dt>보정 2025 탭에서는 왜 MAPE·편의가 “–”인가요?</dt>
+        <dd>2025년은 평가 요약표만 저장되어 있고 시간별 예측값이 저장되어 있지 않아, 시간마다 계산해야 하는 MAPE·편의를 구할 수 없습니다.</dd>
+      </dl>
+
+      <!-- 9 -->
+      <h2 id="s9"><span class="n">9</span>파일과 숫자 출처</h2>
+      <p>사이트의 모든 숫자는 <code>experiments/task2_interval/results/</code>의 CSV에서 나옵니다. <code>web/build_data.py</code>가 이 CSV를 읽어 <code>web/data.js</code>로 묶고, 세 페이지가 이 파일 하나를 함께 씁니다.</p>
+      <table class="gl-tbl">
+        <thead><tr><th>화면</th><th>원본 파일</th></tr></thead>
+        <tbody>
+          <tr><td>방법 비교표 · 핵심 숫자</td><td><code>05_평가_시험구간.csv</code>, <code>05_평가_보정구간_참고.csv</code></td></tr>
+          <tr><td>MAPE · 편의</td><td><code>04_시험구간_예측범위.csv</code>에서 계산</td></tr>
+          <tr><td>하루 예시 · 월별 · 탐색 그래프</td><td><code>08_최종모델_예측범위.csv</code></td></tr>
+          <tr><td>시간대별</td><td><code>07_시간대별_커버리지.csv</code></td></tr>
+          <tr><td>급등일 vs 일반일</td><td><code>spike_days.py</code>가 만든 <code>09_급등일_목록.csv</code>(59일), <code>10_급등일_일반일_비교.csv</code>(방법별), <code>11_일별_피크_최종모델.csv</code>, <code>12_피크_D-1탐지_요약.csv</code>, <code>13_급등일_시간대별_모양.csv</code> · 그래프 <code>plots/06~08</code></td></tr>
+          <tr><td>참고: 시간 단위 급변</td><td><code>06_급등_일반_급락_비교.csv</code></td></tr>
+          <tr><td>앙상블 가중치 · 등각 보정값</td><td><code>02_앙상블_가중치.csv</code>, <code>03_등각보정값_시간대x평일휴일.csv</code></td></tr>
+        </tbody>
+      </table>
+      <p>결과 CSV가 바뀌면 급등일 분석을 다시 돌린 뒤 데이터를 다시 만들면 됩니다(이 설명서의 문장 속 숫자는 직접 고쳐야 합니다).</p>
+      <p><code>.venv\Scripts\python.exe experiments\task2_interval\spike_days.py</code></p>
+      <p><code>.venv\Scripts\python.exe experiments\task2_interval\web\build_data.py</code></p>
+    </article>
+  </div>
+
+  <footer class="foot">
+    <div class="wrap">과제 2 — 80% 예측 범위 설명서 · 인쇄하면 메뉴 없이 문서만 출력됩니다.</div>
+  </footer>
+
+  <script>
+    // 테마 전환(다른 페이지와 같은 저장 키 사용)
+    (function () {
+      var root = document.documentElement;
+      try { var t = localStorage.getItem("theme"); if (t) root.dataset.theme = t; } catch (e) { /* 저장소 없음 */ }
+      document.getElementById("themeBtn").onclick = function () {
+        var dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        root.dataset.theme = dark ? "light" : "dark";
+        try { localStorage.setItem("theme", root.dataset.theme); } catch (e) { /* 무시 */ }
+      };
+    })();
+  </script>
+</body>
+</html>

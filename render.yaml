@@ -1,0 +1,27 @@
+# Render Blueprint — SMP 예측 대시보드 (무료 Static Site)
+# Render 대시보드 > New > Blueprint 에서 이 저장소를 고르면 아래 설정으로 자동 생성됩니다.
+services:
+  - type: web
+    runtime: static
+    name: smp-dashboard
+    branch: main
+    buildCommand: python deploy/build_site.py
+    staticPublishPath: ./public
+    pullRequestPreviewsEnabled: false
+    # 대시보드에 영향을 주는 파일이 바뀔 때만 다시 빌드
+    buildFilter:
+      paths:
+        - experiments/spike_drop/dashboard/**
+        - experiments/spike_drop/dash_export/**
+        - deploy/**
+        - render.yaml
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin

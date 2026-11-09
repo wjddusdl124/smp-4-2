@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMP 예측 한눈에</title>
+  <meta name="description" content="내일 SMP 예측과 80% 예측 범위가 얼마나 잘 맞았는지 한 화면에 쉽게 정리">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="glance.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="logo" href="glance.html">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg>
+        SMP 예측 범위
+      </a>
+      <nav class="tabs" aria-label="페이지">
+        <a href="glance.html" class="on" aria-current="page">한눈에</a>
+        <a href="index.html">상세 분석</a>
+        <a href="guide.html">설명서</a>
+      </nav>
+      <button class="theme" id="themeBtn" type="button" aria-label="밝게/어둡게 전환">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- [1] 소개 -->
+    <section class="board">
+      <div>
+        <p class="eyebrow">Dashboard · 과제 2</p>
+        <h1>SMP 예측 한눈에</h1>
+        <p class="board-sub">
+          전날 미리 내일 24시간의 전기 도매가격(육지 SMP)을 예측합니다.
+          <b>가장 가능성 높은 값</b> 하나와 함께 <b>“10번 중 8번은 이 안에 들어온다”는 범위</b>를 같이 알려줍니다.
+        </p>
+        <div class="chips">
+          <span class="chip">시험 기간 2026.1.1 – 9.30</span>
+          <span class="chip">6,528시간</span>
+          <span class="chip">최종 모델: 앙상블 + 등각 보정</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- [2] 큰 숫자 4개 -->
+    <section class="tiles" id="tiles" aria-label="핵심 숫자"></section>
+
+    <!-- [3] 한 줄 요약 -->
+    <section class="summary" id="summary"></section>
+
+    <!-- [4] 읽는 법 + 하루 예시 -->
+    <section class="row-2">
+      <div class="panel">
+        <p class="eyebrow">How to read</p>
+        <h2>그래프 읽는 법</h2>
+        <div class="howto">
+          <svg viewBox="0 0 260 150" class="howto-svg" aria-hidden="true">
+            <path d="M10,52 C60,30 90,40 130,48 C170,56 200,30 250,36 L250,104 C200,98 170,118 130,110 C90,102 60,112 10,96 Z" class="h-band"/>
+            <path d="M10,74 C60,70 90,72 130,79 C170,86 200,64 250,70" class="h-med"/>
+            <path d="M10,80 C40,66 70,82 100,74 C130,66 150,92 180,86 C205,80 225,58 250,62" class="h-act"/>
+            <circle cx="214" cy="28" r="5" class="h-out"/>
+            <text x="252" y="32" text-anchor="end" class="h-t">상한</text>
+            <text x="252" y="118" text-anchor="end" class="h-t">하한</text>
+          </svg>
+          <ol class="howto-list">
+            <li><i class="key key-band"></i><div><b>파란 띠 = 80% 범위</b><span>실제 가격이 10시간 중 8시간은 이 안에 들어오도록 만든 구간</span></div></li>
+            <li><i class="key key-med"></i><div><b>파란 점선 = 예측값</b><span>가장 가능성 높은 가격(중앙값)</span></div></li>
+            <li><i class="key key-act"></i><div><b>검은 선 = 실제 가격</b><span>다음 날 실제로 결정된 SMP</span></div></li>
+            <li><i class="key key-out"></i><div><b>빨간 점 = 범위 밖</b><span>띠를 벗어난 시간. 전체의 약 20%면 정상</span></div></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">One day</p>
+            <h2>하루 예측 vs 실제</h2>
+          </div>
+          <div class="day-nav">
+            <button type="button" id="dayPrev" aria-label="전날">‹</button>
+            <input type="date" id="dayInput" min="2026-01-01" max="2026-09-30" aria-label="날짜">
+            <button type="button" id="dayNext" aria-label="다음 날">›</button>
+          </div>
+        </div>
+        <div class="quick" id="quick"></div>
+        <div class="chart" id="dayChart" style="height:260px"></div>
+        <p class="day-text" id="dayText"></p>
+      </div>
+    </section>
+
+    <!-- [5] 시간대별 · 목표 달성표 -->
+    <section class="row-2">
+      <div class="panel">
+        <p class="eyebrow">Hourly pattern</p>
+        <h2>몇 시에 잘 맞고, 몇 시에 덜 맞을까</h2>
+        <p class="panel-sub">시간대별로 실제 가격이 범위 안에 들어온 비율. 초록 띠(75–85%) 안이면 목표대로, 주황은 목표보다 낮음, 흐린 파랑은 85%를 넘어 넉넉한 시간입니다.</p>
+        <div class="chart" id="hourBars" style="height:240px"></div>
+        <p class="panel-foot" id="hourText"></p>
+      </div>
+
+      <div class="panel">
+        <p class="eyebrow">Scorecard</p>
+        <h2>목표 달성표</h2>
+        <p class="panel-sub">과제에서 정한 성공 기준과 실제 결과</p>
+        <ul class="checks" id="checks"></ul>
+      </div>
+    </section>
+
+    <!-- [6] 급등일 vs 일반일 -->
+    <section class="panel" id="spike">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">Spike days</p>
+          <h2>급등일에는 「그 1시간」을 놓칩니다</h2>
+        </div>
+        <div class="seg" id="spkSeg" role="group" aria-label="기간">
+          <button type="button" data-p="test" class="on">시험 2026</button>
+          <button type="button" data-p="calib">보정 2025</button>
+        </div>
+      </div>
+      <p class="panel-sub" id="spkDef"></p>
+
+      <div class="facts" id="spkFacts"></div>
+
+      <div class="spk-grid">
+        <div>
+          <h3 class="sub-h">일반일 vs 급등일 <span class="muted" id="spkPeriodLbl"></span></h3>
+          <div class="table-wrap"><table class="mtable cmp" id="spkTable"></table></div>
+        </div>
+        <div>
+          <h3 class="sub-h">급등일 13일의 시간대별 평균 <span class="muted">· 2025·2026 합산</span></h3>
+          <div class="chart" id="spkShape" style="height:230px"></div>
+        </div>
+      </div>
+
+      <h3 class="sub-h">급등일 목록 <span class="muted">· 2026년 날짜를 누르면 위 「하루 예측 vs 실제」에서 볼 수 있습니다</span></h3>
+      <div class="table-wrap"><table class="mtable" id="spkDays"></table></div>
+
+      <p class="panel-foot" id="spkFoot"></p>
+    </section>
+
+    <!-- [7] 월별 -->
+    <section class="panel">
+      <p class="eyebrow">Monthly</p>
+      <h2>달마다 얼마나 맞았나</h2>
+      <div class="table-wrap">
+        <table class="mtable" id="monthTable"></table>
+      </div>
+    </section>
+
+    <!-- [8] 화면 안내 -->
+    <section class="map">
+      <div class="map-intro">
+        <p class="eyebrow">More</p>
+        <h2>더 자세히 보기</h2>
+        <p class="panel-sub">궁금한 부분을 눌러 상세 화면으로 이동하세요.</p>
+      </div>
+      <a class="map-card" href="index.html#explore"><span>01</span><b>예측 범위 살펴보기</b><p>9개월 전체를 날짜별로 넘겨 보며 범위와 실제를 비교</p></a>
+      <a class="map-card" href="index.html#compare"><span>02</span><b>6가지 방법 비교</b><p>왜 이 방법을 최종으로 골랐는지 숫자로 비교</p></a>
+      <a class="map-card" href="index.html#method"><span>03</span><b>어떻게 만들었나</b><p>입력 데이터, 모델 3개, 앙상블, 보정 단계</p></a>
+      <a class="map-card" href="guide.html"><span>04</span><b>설명서</b><p>용어 풀이, 화면 읽는 법, 결과 해석과 근거</p></a>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">과제 2 — 80% 예측 범위 · 숫자는 모두 학습에 쓰지 않은 2026년 시험 기간 결과입니다.</div>
+  </footer>
+
+  <div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="glance.js"></script>
+</body>
+</html>
